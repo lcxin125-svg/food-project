@@ -26,7 +26,6 @@
         h1 { color: #e74c3c; margin-bottom: 5px; }
         .subtitle { color: #7f8c8d; margin-bottom: 25px; }
         
-        /* 篩選區塊排版 */
         .filter-group {
             background: #f8f9fa;
             padding: 15px;
@@ -38,20 +37,17 @@
             gap: 10px;
             align-items: center;
         }
-
         .filter-item {
             display: flex;
             flex-direction: column;
             align-items: flex-start;
         }
-
         .filter-item label {
             font-size: 12px;
             color: #555;
             margin-bottom: 4px;
             font-weight: bold;
         }
-
         select, button {
             font-size: 14px;
             padding: 8px 14px;
@@ -92,7 +88,6 @@
             border-top: 30px solid #e74c3c;
             z-index: 10;
         }
-        
         .result-card {
             margin-top: 25px;
             padding: 20px;
@@ -126,19 +121,19 @@
             <label for="ratingSelect">最低星等評價</label>
             <select id="ratingSelect">
                 <option value="0">不限評價</option>
-                <option value="4.5">⭐ 4.5 星以上 (極高好評)</option>
-                <option value="4.0">⭐ 4.0 星以上 (優質推薦)</option>
-                <option value="3.5">⭐ 3.5 星以上 (普通水準)</option>
+                <option value="4.5">⭐ 4.5 星以上</option>
+                <option value="4.0">⭐ 4.0 星以上</option>
+                <option value="3.5">⭐ 3.5 星以上</option>
             </select>
         </div>
 
         <div class="filter-item">
-            <label for="timeSelect">距離元智車程/路程</label>
+            <label for="timeSelect">距離元智路程</label>
             <select id="timeSelect">
                 <option value="999">不限距離</option>
-                <option value="5">📍 5 分鐘內 (近校區)</option>
-                <option value="10">📍 10 分鐘內 (中等距離)</option>
-                <option value="15">📍 15 分鐘內 (稍微偏遠)</option>
+                <option value="5">📍 5 分鐘內</option>
+                <option value="10">📍 10 分鐘內</option>
+                <option value="15">📍 15 分鐘內</option>
             </select>
         </div>
 
@@ -166,7 +161,6 @@ const ctx = canvas.getContext('2d');
 let currentAngle = 0;
 let isSpinning = false;
 let restaurants = [];
-
 const colors = ["#ff7675", "#74b9ff", "#a29bfe", "#ffeaa7", "#55efc4", "#fab1a0", "#fd79a8", "#00cec9"];
 
 drawDefaultWheel();
@@ -200,7 +194,6 @@ function drawWheel(list, angleOffset = 0) {
         ctx.save();
         let name = list[i]['餐廳名稱'];
         if(name.length > 5) name = name.substring(0, 5) + '...';
-
         ctx.fillStyle = '#2d3436';
         ctx.font = 'bold 11px Microsoft JhengHei';
         ctx.translate(175, 175);
@@ -217,7 +210,6 @@ function fetchAndSpin() {
     const rating = document.getElementById('ratingSelect').value;
     const time = document.getElementById('timeSelect').value;
 
-    // 將三個篩選條件同時打包送給 Python 後端
     fetch('/get_restaurants', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
