@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>今天不踩雷 - 幸運大轉盤</title>
+    <style>
+        body {
+            font-family: "Microsoft JhengHei", Arial, sans-serif;
+            background-color: #f7f9fc;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            text-align: center;
+            max-width: 600px;
+            width: 100%;
+        }
+        h1 { color: #e74c3c; margin-bottom: 5px; }
+        .subtitle { color: #7f8c8d; margin-bottom: 25px; }
+        
+        .wheel-box {
+            position: relative;
+            width: 350px;
+            height: 350px;
+            margin: 20px auto;
+        }
+        canvas {
+            border-radius: 50%;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        }
+        .pointer {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-top: 30px solid #e74c3c;
+            z-index: 10;
+        }
+        
+        select, button {
+            font-size: 16px;
+            padding: 10px 18px;
+            margin: 10px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+        button {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        button:hover { background-color: #c0392b; }
+        button:disabled { background-color: #bdc3c7; }
+
+        .result-card {
+            margin-top: 25px;
+            padding: 20px;
+            background-color: #fff9f9;
+            border-radius: 8px;
+            border-left: 5px solid #e74c3c;
+            text-align: left;
+            display: none;
+        }
+        .res-title { font-size: 22px; font-weight: bold; color: #c0392b; margin-bottom: 8px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>今天不踩雷 🎯</h1>
+    <div class="subtitle">元智大學周邊美食幸運轉盤</div>
+
+    <div>
+        <label for="budgetSelect">篩選預算：</label>
+        <select id="budgetSelect">
+            <option value="all">不限預算</option>
+            {% for b in budgets %}
+            <option value="{{ b }}">{{ b }}</option>
+            {% endfor %}
+        </select>
+        <button id="spinBtn" onclick="fetchAndSpin()">開始轉盤！</button>
+    </div>
+
+    <div class="wheel-box">
+        <div class="pointer"></div>
+        <canvas id="wheelCanvas" width="350" height="350"></canvas>
+    </div>
+
+    <div id="resultCard" class="result-card">
+        <div class="res-title" id="resName">餐廳名稱</div>
+        <p><strong>菜系：</strong><span id="resType">-</span></p>
+        <p><strong>評價：</strong>⭐ <span id="resRating">-</span></p>
+        <p><strong>距離元智：</strong>📍 <span id="resDist">-</span></p>
+        <p><strong>地址：</strong><span id="resAddr">-</span></p>
+        <p><strong>營業時間：</strong>⏰ <span id="resTime">-</span></p>
+    </div>
+</div>
+
+<script>
+const canvas = document.getElementById('wheelCanvas');
+const ctx = canvas.getContext('2d');
+let currentAngle = 0;
+let isSpinning = false;
+let restaurants = [];
+
+const colors = ["#ff7675", "#74b9ff", "#a29bfe", "#ffeaa7", "#55efc4", "#fab1a0", "#fd79a8", "#00cec9"];
+
+drawDefaultWheel();
+
+function drawDefaultWheel() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#dfe6e9';
+    ctx.beginPath();
+    ctx.arc(175, 175, 175, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.fillStyle = '#636e72';
+    ctx.font = '16px Microsoft JhengHei';
+    ctx.textAlign = 'center';
+    ctx.fillText('請選擇預算並點擊開始', 175, 175);
+}
+
+function drawWheel(list, angleOffset = 0) {
+    const numSegments = list.length;
+    const arcSize = (2 * Math.PI) / numSegments;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    for (let i = 0; i < numSegments; i++) {
+        const angle = angleOffset + (i * arcSize);
+        ctx.fillStyle = colors[i % colors.length];
+        ctx.beginPath();
+        ctx.moveTo(175, 175);
+        ctx.arc(175, 175, 175, angle, angle + arcSize);
+        ctx.lineTo(175, 175);
+        ctx.fill();
+
+        ctx.save();
+        ctx.fillStyle = '#2d3436';
+        ctx.font = 'bold 12px Microsoft JhengHei';
+        ctx.translate(175, 175);
+        ctx.rotate(angle + arcSize / 2);
+        ctx.textAlign = 'right';
+        let name = list[i]['餐廳名稱'];
+        if(name.length > 8) name = name.substring(0, 7) + '...';
+        ctx.fillText(name, 160, 5);
+        ctx.restore();
+    }
+}
+
+function fetchAndSpin() {
+    if (isSpinning) return;
+    const budget = document.getElementById('budgetSelect').value;
+
+    fetch('/get_restaurants', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ budget: budget })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'empty' || data.restaurants.length === 0) {
+            alert('此預算區間內沒有餐廳資料！');
+            return;
+        }
+        restaurants = data.restaurants;
+        while (restaurants.length < 4) {
+            restaurants = restaurants.concat(data.restaurants);
+        }
+        startSpinAnimation();
+    });
+}
+
+function startSpinAnimation() {
+    isSpinning = true;
+    document.getElementById('spinBtn').disabled = true;
+    document.getElementById('resultCard').style.display = 'none';
+
+    const numSegments = restaurants.length;
+    const arcSize = (2 * Math.PI) / numSegments;
+    const spinCircles = 5 + Math.floor(Math.random() * 5);
+    const targetAngle = currentAngle + (spinCircles * 2 * Math.PI) + (Math.random() * 2 * Math.PI);
+    const duration = 4000;
+    const startTime = performance.now();
+
+    function animate(currentTime) {
+        const elapsed = currentTime - startTime;
+        if (elapsed < duration) {
+            const progress = elapsed / duration;
+            const easeOut = 1 - Math.pow(1 - progress, 3);
+            const angle = currentAngle + (targetAngle - currentAngle) * easeOut;
+            drawWheel(restaurants, angle);
+            requestAnimationFrame(animate);
+        } else {
+            currentAngle = targetAngle % (2 * Math.PI);
+            drawWheel(restaurants, currentAngle);
+            const pointerAngle = (1.5 * Math.PI - currentAngle + 2 * Math.PI) % (2 * Math.PI);
+            const selectedIndex = Math.floor(pointerAngle / arcSize) % numSegments;
+            const winner = restaurants[selectedIndex];
+            showResult(winner);
+            isSpinning = false;
+            document.getElementById('spinBtn').disabled = false;
+        }
+    }
+    requestAnimationFrame(animate);
+}
+
+function showResult(winner) {
+    document.getElementById('resName').innerText = winner['餐廳名稱'];
+    document.getElementById('resType').innerText = winner['菜系'] || '未知';
+    document.getElementById('resRating').innerText = winner['評價'] || '無';
+    document.getElementById('resDist').innerText = winner['距離元智大學'] || '未知';
+    document.getElementById('resAddr').innerText = winner['地址'] || '未知';
+    document.getElementById('resTime').innerText = winner['營業時間'] || '未知';
+    document.getElementById('resultCard').style.display = 'block';
+}
+</script>
+
+</body>
+</html>
