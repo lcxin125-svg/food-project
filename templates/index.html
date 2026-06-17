@@ -26,6 +26,50 @@
         h1 { color: #e74c3c; margin-bottom: 5px; }
         .subtitle { color: #7f8c8d; margin-bottom: 25px; }
         
+        /* 篩選區塊排版 */
+        .filter-group {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .filter-item {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .filter-item label {
+            font-size: 12px;
+            color: #555;
+            margin-bottom: 4px;
+            font-weight: bold;
+        }
+
+        select, button {
+            font-size: 14px;
+            padding: 8px 14px;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+        }
+        button {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+            margin-top: 16px;
+        }
+        button:hover { background-color: #c0392b; }
+        button:disabled { background-color: #bdc3c7; }
+
         .wheel-box {
             position: relative;
             width: 350px;
@@ -49,24 +93,6 @@
             z-index: 10;
         }
         
-        select, button {
-            font-size: 16px;
-            padding: 10px 18px;
-            margin: 10px;
-            border-radius: 8px;
-            border: 1px solid #ddd;
-        }
-        button {
-            background-color: #e74c3c;
-            color: white;
-            border: none;
-            cursor: pointer;
-            font-weight: bold;
-            transition: background 0.2s;
-        }
-        button:hover { background-color: #c0392b; }
-        button:disabled { background-color: #bdc3c7; }
-
         .result-card {
             margin-top: 25px;
             padding: 20px;
@@ -85,14 +111,37 @@
     <h1>今天不踩雷 🎯</h1>
     <div class="subtitle">元智大學周邊美食幸運轉盤</div>
 
-    <div>
-        <label for="budgetSelect">篩選預算：</label>
-        <select id="budgetSelect">
-            <option value="all">不限預算</option>
-            {% for b in budgets %}
-            <option value="{{ b }}">{{ b }}</option>
-            {% endfor %}
-        </select>
+    <div class="filter-group">
+        <div class="filter-item">
+            <label for="budgetSelect">價格預算</label>
+            <select id="budgetSelect">
+                <option value="all">不限預算</option>
+                {% for b in budgets %}
+                <option value="{{ b }}">{{ b }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="filter-item">
+            <label for="ratingSelect">最低星等評價</label>
+            <select id="ratingSelect">
+                <option value="0">不限評價</option>
+                <option value="4.5">⭐ 4.5 星以上 (極高好評)</option>
+                <option value="4.0">⭐ 4.0 星以上 (優質推薦)</option>
+                <option value="3.5">⭐ 3.5 星以上 (普通水準)</option>
+            </select>
+        </div>
+
+        <div class="filter-item">
+            <label for="timeSelect">距離元智車程/路程</label>
+            <select id="timeSelect">
+                <option value="999">不限距離</option>
+                <option value="5">📍 5 分鐘內 (近校區)</option>
+                <option value="10">📍 10 分鐘內 (中等距離)</option>
+                <option value="15">📍 15 分鐘內 (稍微偏遠)</option>
+            </select>
+        </div>
+
         <button id="spinBtn" onclick="fetchAndSpin()">開始轉盤！</button>
     </div>
 
@@ -131,7 +180,7 @@ function drawDefaultWheel() {
     ctx.fillStyle = '#636e72';
     ctx.font = '16px Microsoft JhengHei';
     ctx.textAlign = 'center';
-    ctx.fillText('請選擇預算並點擊開始', 175, 175);
+    ctx.fillText('設定條件並點擊開始', 175, 175);
 }
 
 function drawWheel(list, angleOffset = 0) {
@@ -149,14 +198,15 @@ function drawWheel(list, angleOffset = 0) {
         ctx.fill();
 
         ctx.save();
+        let name = list[i]['餐廳名稱'];
+        if(name.length > 5) name = name.substring(0, 5) + '...';
+
         ctx.fillStyle = '#2d3436';
-        ctx.font = 'bold 12px Microsoft JhengHei';
+        ctx.font = 'bold 11px Microsoft JhengHei';
         ctx.translate(175, 175);
         ctx.rotate(angle + arcSize / 2);
         ctx.textAlign = 'right';
-        let name = list[i]['餐廳名稱'];
-        if(name.length > 8) name = name.substring(0, 7) + '...';
-        ctx.fillText(name, 160, 5);
+        ctx.fillText(name, 140, 4);
         ctx.restore();
     }
 }
@@ -164,16 +214,19 @@ function drawWheel(list, angleOffset = 0) {
 function fetchAndSpin() {
     if (isSpinning) return;
     const budget = document.getElementById('budgetSelect').value;
+    const rating = document.getElementById('ratingSelect').value;
+    const time = document.getElementById('timeSelect').value;
 
+    // 將三個篩選條件同時打包送給 Python 後端
     fetch('/get_restaurants', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ budget: budget })
+        body: JSON.stringify({ budget: budget, rating: rating, time: time })
     })
     .then(response => response.json())
     .then(data => {
         if (data.status === 'empty' || data.restaurants.length === 0) {
-            alert('此預算區間內沒有餐廳資料！');
+            alert('找不到符合目前篩選條件的餐廳，請放寬標準再試一次！');
             return;
         }
         restaurants = data.restaurants;
