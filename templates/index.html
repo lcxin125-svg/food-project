@@ -98,6 +98,16 @@
             display: none;
         }
         .res-title { font-size: 22px; font-weight: bold; color: #c0392b; margin-bottom: 8px; }
+        
+        /* 地圖連結樣式：亮藍色、底線、滑鼠指到有手勢 */
+        .map-link {
+            color: #3498db;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+        .map-link:hover {
+            color: #2980b9;
+        }
     </style>
 </head>
 <body>
@@ -150,7 +160,7 @@
         <p><strong>菜系：</strong><span id="resType">-</span></p>
         <p><strong>評價：</strong>⭐ <span id="resRating">-</span></p>
         <p><strong>距離元智：</strong>📍 <span id="resDist">-</span></p>
-        <p><strong>地址：</strong><span id="resAddr">-</span></p>
+        <p><strong>地址：</strong><a id="resMapLink" href="#" target="_blank" class="map-link"><span id="resAddr">-</span></a></p>
         <p><strong>營業時間：</strong>⏰ <span id="resTime">-</span></p>
     </div>
 </div>
@@ -270,6 +280,19 @@ function showResult(winner) {
     document.getElementById('resDist').innerText = winner['距離元智大學'] || '未知';
     document.getElementById('resAddr').innerText = winner['地址'] || '未知';
     document.getElementById('resTime').innerText = winner['營業時間'] || '未知';
+    
+    // 生成 Google Maps 地圖導航連結
+    const restaurantName = winner['餐廳名稱'];
+    const restaurantAddr = winner['地址'] || '';
+    if (restaurantAddr && restaurantAddr !== '-') {
+        // 利用 encodeURIComponent 自動把中文轉成網址編碼，防止跳轉亂碼
+        document.getElementById('resMapLink').href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(restaurantName + ' ' + restaurantAddr)}`;
+        document.getElementById('resMapLink').style.pointerEvents = 'auto';
+    } else {
+        document.getElementById('resMapLink').href = '#';
+        document.getElementById('resMapLink').style.pointerEvents = 'none';
+    }
+
     document.getElementById('resultCard').style.display = 'block';
 }
 </script>
