@@ -33,8 +33,13 @@ df["純分鐘"] = df["距離元智大學"].apply(extract_minutes)
 @app.route("/")
 def index():
   # 抓取不重複價格區間
-  budgets = df["價格區間"].dropna().unique().tolist()
-  budgets = [b for b in budgets if b != "nan" and b != "None"]
+  raw_budgets = df["價格區間"].dropna().unique().tolist()
+  raw_budgets = [b for b in raw_budgets if b != "nan" and b != "None"]
+
+  # 【關鍵排序修正】將預算欄位由大到小排序
+  # 這裡使用 reverse=True 讓它由大到小排列（例如：$200-300 會排在 $100-200 前面）
+  budgets = sorted(raw_budgets, reverse=True)
+
   return render_template("index.html", budgets=budgets)
 
 
