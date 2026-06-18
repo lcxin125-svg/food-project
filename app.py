@@ -11,6 +11,7 @@ df = pd.read_excel("data.xlsx")
 df.columns = df.columns.str.strip()
 df["餐廳名稱"] = df["餐廳名稱"].astype(str).str.strip()
 df["價格區間"] = df["價格區間"].astype(str).str.strip()
+df["菜系"] = df["菜系"].astype(str).str.strip()
 df["評價"] = pd.to_numeric(df["評價"], errors="coerce").fillna(0.0)
 
 
@@ -32,15 +33,22 @@ df["純分鐘"] = df["距離元智大學"].apply(extract_minutes)
 
 @app.route("/")
 def index():
-  # 抓取不重複價格區間
+  # 抓取不重複價格區間並排序
   raw_budgets = df["價格區間"].dropna().unique().tolist()
-  raw_budgets = [b for b in raw_budgets if b != "nan" and b != "None"]
+  raw_budgets = [
+      b for b in raw_budgets if b != "nan" and b != "None" and b != "-"
+  ]
+  budgets = sorted(raw_budgets, reverse=False)
 
-  # 【關鍵排序修正】將預算欄位由大到小排序
-  # 這裡使用 reverse=True 讓它由大到小排列（例如：$200-300 會排在 $100-200 前面）
-  budgets = sorted(raw_budgets, reverse=True)
+  # 【自動抓取 Excel 的菜系分類】防止手寫對不上的 BUG
+  raw_types = df["菜系"].dropna().unique().tolist()
+  restaurant_types = [
+      t for t in raw_types if t != "nan" and t != "None" and t != "-"
+  ]
 
-  return render_template("index.html", budgets=budgets)
+  return render_template(
+      "index.html", budgets=budgets, restaurant_types=restaurant_types
+  )
 
 
 @app.route("/get_restaurants", methods=["POST"])
@@ -49,6 +57,7 @@ def get_restaurants():
   selected_budget = data.get("budget")
   min_rating = float(data.get("rating", 0))
   max_time = int(data.get("time", 999))
+  selected_type = data.get("type", "all")
 
   filtered_df = df.copy()
 
@@ -62,6 +71,10 @@ def get_restaurants():
   # 條件 3: 距離時間篩選
   if max_time != 999:
     filtered_df = filtered_df[filtered_df["純分鐘"] <= max_time]
+
+  # 條件 4: 菜系種類篩選 (直接交給後端過濾，最安全！)
+  if selected_type and selected_type != "all":
+    filtered_df = filtered_df[filtered_df["菜系"] == selected_type]
 
   if filtered_df.empty:
     return jsonify({"status": "empty", "restaurants": []})
