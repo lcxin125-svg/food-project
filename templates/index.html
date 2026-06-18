@@ -85,27 +85,6 @@
             box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
         }
 
-        /* 功能加碼 1：排雷開關專用區塊 */
-        .toggle-item {
-            grid-column: span 2;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: #fff3cd;
-            padding: 12px 16px;
-            border-radius: 10px;
-            border: 1px solid #ffeeba;
-            margin-top: 4px;
-        }
-        .toggle-label {
-            font-size: 13px;
-            color: #856404;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
         /* 啟動按鈕：炫彩漸層，有滑動放大動畫 */
         .btn-spin {
             grid-column: span 2;
@@ -264,18 +243,13 @@
         </div>
 
         <div class="filter-item">
-            <label for="timeSelect">📍 距離路程</label>
+            <label for="timeSelect">🏍️ 距離路程 (騎車)</label>
             <select id="timeSelect">
                 <option value="999">不限距離</option>
                 <option value="5">5 分鐘內 (極近校區)</option>
                 <option value="10">10 分鐘內 (中等車程)</option>
                 <option value="15">15 分鐘內 (稍微偏遠)</option>
             </select>
-        </div>
-
-        <div class="toggle-item">
-            <span class="toggle-label">🛡️ 開啟「終極排雷機制」 (低評絕對禁入)</span>
-            <input type="checkbox" id="antiMineToggle" checked style="width: 18px; height: 18px; cursor: pointer;">
         </div>
 
         <button class="btn-spin" id="spinBtn" onclick="fetchAndSpin()">開始旋轉轉盤</button>
@@ -293,7 +267,7 @@
         </div>
         <div class="res-info-grid">
             <div class="res-item"><strong>⭐ 商家評價：</strong><span id="resRating">-</span></div>
-            <div class="res-item"><strong>📍 距離元智：</strong><span id="resDist">-</span></div>
+            <div class="res-item"><strong>🏍️ 距離元智 (騎車)：</strong><span id="resDist">-</span></div>
             <div class="res-item" style="grid-column: span 2;"><strong>⏰ 營業時間：</strong><span id="resTime">-</span></div>
             <div class="res-item" style="grid-column: span 2; margin-bottom: 4px;"><strong>🏠 餐廳地址：</strong><span id="resAddr">-</span></div>
             
@@ -313,6 +287,20 @@ let restaurants = [];
 
 // 採用精緻、飽和度舒適的馬卡龍科技漸層配色
 const colors = ["#ff7675", "#74b9ff", "#a29bfe", "#ffeaa7", "#55efc4", "#fab1a0", "#fd79a8", "#00cec9"];
+
+// 頁面載入時，將預算選項改為由低到高排序
+window.addEventListener('DOMContentLoaded', () => {
+    const budgetSelect = document.getElementById('budgetSelect');
+    const options = Array.from(budgetSelect.options);
+    const defaultOpt = options.shift(); // 移除並保留「不限預算」
+    
+    // 依據字串進行從小到大排序
+    options.sort((a, b) => a.value.localeCompare(b.value, undefined, {numeric: true, sensitivity: 'base'}));
+    
+    budgetSelect.innerHTML = '';
+    budgetSelect.appendChild(defaultOpt);
+    options.forEach(opt => budgetSelect.appendChild(opt));
+});
 
 drawDefaultWheel();
 
@@ -358,15 +346,9 @@ function drawWheel(list, angleOffset = 0) {
 function fetchAndSpin() {
     if (isSpinning) return;
     const budget = document.getElementById('budgetSelect').value;
-    let rating = parseFloat(document.getElementById('ratingSelect').value);
+    const rating = parseFloat(document.getElementById('ratingSelect').value);
     const time = document.getElementById('timeSelect').value;
     const type = document.getElementById('typeSelect').value;
-    const antiMine = document.getElementById('antiMineToggle').checked;
-
-    // 如果開起終極排雷，最低門檻自動拉高至 3.8 星
-    if (antiMine && rating < 3.8) {
-        rating = 3.8;
-    }
 
     fetch('/get_restaurants', {
         method: 'POST',
@@ -411,7 +393,7 @@ function startSpinAnimation() {
         const elapsed = currentTime - startTime;
         if (elapsed < duration) {
             const progress = elapsed / duration;
-            const easeOut = 1 - Math.pow(1 - progress, 4); // 更擬真的緩動老鷹煞車
+            const easeOut = 1 - Math.pow(1 - progress, 4); 
             const angle = currentAngle + (targetAngle - currentAngle) * easeOut;
             drawWheel(restaurants, angle);
             requestAnimationFrame(animate);
