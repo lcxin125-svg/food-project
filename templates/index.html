@@ -5,120 +5,233 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>今天不踩雷 - 幸運大轉盤</title>
     <style>
+        /* 整體漸層背景，呼應高質感現代風格 */
         body {
-            font-family: "Microsoft JhengHei", Arial, sans-serif;
-            background-color: #f7f9fc;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Microsoft JhengHei", sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
             margin: 0;
-            padding: 20px;
+            padding: 40px 20px;
             display: flex;
             flex-direction: column;
             align-items: center;
+            min-height: 100vh;
         }
+
+        /* 主卡片設計：圓角、細緻陰影、毛玻璃質感邊框 */
         .container {
-            background: white;
-            padding: 30px;
-            border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 24px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
             text-align: center;
-            max-width: 600px;
+            max-width: 650px;
             width: 100%;
+            box-sizing: border-box;
         }
-        h1 { color: #e74c3c; margin-bottom: 5px; }
-        .subtitle { color: #7f8c8d; margin-bottom: 25px; }
+
+        /* 標題與副標題 */
+        h1 { 
+            color: #2c3e50; 
+            margin: 0 0 8px 0; 
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: 1px;
+        }
+        .subtitle { 
+            color: #95a5a6; 
+            font-size: 14px;
+            margin-bottom: 30px; 
+            font-weight: 500;
+        }
         
-        .filter-group {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 10px;
-            align-items: center;
+        /* 篩選群組：優雅的網格排版 */
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+            border: 1px solid #edf2f7;
+            text-align: left;
         }
+
         .filter-item {
             display: flex;
             flex-direction: column;
-            align-items: flex-start;
+            gap: 6px;
         }
+
         .filter-item label {
-            font-size: 12px;
-            color: #555;
-            margin-bottom: 4px;
-            font-weight: bold;
+            font-size: 13px;
+            color: #64748b;
+            font-weight: 600;
         }
-        select, button {
+
+        /* 下拉選單高級感樣式 */
+        select {
             font-size: 14px;
-            padding: 8px 14px;
-            border-radius: 6px;
-            border: 1px solid #ddd;
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid #cbd5e1;
+            background-color: white;
+            color: #334155;
+            outline: none;
+            transition: all 0.2s;
         }
-        button {
-            background-color: #e74c3c;
+        select:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        /* 功能加碼 1：排雷開關專用區塊 */
+        .toggle-item {
+            grid-column: span 2;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #fff3cd;
+            padding: 12px 16px;
+            border-radius: 10px;
+            border: 1px solid #ffeeba;
+            margin-top: 4px;
+        }
+        .toggle-label {
+            font-size: 13px;
+            color: #856404;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* 啟動按鈕：炫彩漸層，有滑動放大動畫 */
+        .btn-spin {
+            grid-column: span 2;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
+            font-size: 16px;
+            font-weight: 700;
+            padding: 14px;
+            border-radius: 12px;
             cursor: pointer;
-            font-weight: bold;
-            transition: background 0.2s;
-            margin-top: 16px;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s;
+            margin-top: 8px;
         }
-        button:hover { background-color: #c0392b; }
-        button:disabled { background-color: #bdc3c7; }
+        .btn-spin:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+        .btn-spin:disabled { 
+            background: #cbd5e1; 
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
 
+        /* 轉盤外框 */
         .wheel-box {
             position: relative;
-            width: 350px;
-            height: 350px;
-            margin: 20px auto;
+            width: 320px;
+            height: 320px;
+            margin: 30px auto;
         }
         canvas {
             border-radius: 50%;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
         }
+        /* 精緻頂部指針 */
         .pointer {
             position: absolute;
-            top: -15px;
+            top: -12px;
             left: 50%;
             transform: translateX(-50%);
             width: 0;
             height: 0;
-            border-left: 15px solid transparent;
-            border-right: 15px solid transparent;
-            border-top: 30px solid #e74c3c;
+            border-left: 12px solid transparent;
+            border-right: 12px solid transparent;
+            border-top: 24px solid #ff4757;
             z-index: 10;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15));
         }
+        
+        /* 結果卡片：效仿截圖的卡片懸浮感與高雅配色 */
         .result-card {
-            margin-top: 25px;
-            padding: 20px;
-            background-color: #fff9f9;
-            border-radius: 8px;
-            border-left: 5px solid #e74c3c;
+            margin-top: 30px;
+            padding: 24px;
+            background: #ffffff;
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
             text-align: left;
             display: none;
+            animation: fadeIn 0.5s ease-out;
         }
-        .res-title { font-size: 22px; font-weight: bold; color: #c0392b; margin-bottom: 8px; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .res-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #f1f5f9;
+            padding-bottom: 12px;
+            margin-bottom: 16px;
+        }
+        .res-title { font-size: 22px; font-weight: 800; color: #1e293b; }
+        .res-badge {
+            background: #e0e7ff;
+            color: #4f46e5;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 20px;
+        }
+        .res-info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+        .res-item {
+            font-size: 14px;
+            color: #475569;
+        }
+        .res-item strong { color: #1e293b; }
         
-        /* 地圖連結樣式：亮藍色、底線、滑鼠指到有手勢 */
-        .map-link {
-            color: #3498db;
-            text-decoration: underline;
-            cursor: pointer;
+        /* 地圖導航按鈕樣式 */
+        .map-btn {
+            grid-column: span 2;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            background-color: #00b894;
+            color: white;
+            text-decoration: none;
+            padding: 10px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 14px;
+            transition: background 0.2s;
+            box-shadow: 0 4px 12px rgba(0, 184, 148, 0.2);
         }
-        .map-link:hover {
-            color: #2980b9;
-        }
+        .map-btn:hover { background-color: #009474; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <h1>今天不踩雷 🎯</h1>
-    <div class="subtitle">元智大學周邊美食幸運轉盤</div>
+    <div class="subtitle">元智大學周邊美食・智慧型幸運大轉盤</div>
 
-    <div class="filter-group">
+    <div class="filter-grid">
         <div class="filter-item">
-            <label for="budgetSelect">價格預算</label>
+            <label for="budgetSelect">💰 價格預算</label>
             <select id="budgetSelect">
                 <option value="all">不限預算</option>
                 {% for b in budgets %}
@@ -128,40 +241,66 @@
         </div>
 
         <div class="filter-item">
-            <label for="ratingSelect">最低星等評價</label>
-            <select id="ratingSelect">
-                <option value="0">不限評價</option>
-                <option value="4.5">⭐ 4.5 星以上</option>
-                <option value="4.0">⭐ 4.0 星以上</option>
-                <option value="3.5">⭐ 3.5 星以上</option>
+            <label for="typeSelect">🍜 想要吃哪類</label>
+            <select id="typeSelect">
+                <option value="all">不限種類</option>
+                <option value="便當快餐">便當快餐</option>
+                <option value="麵食點心">麵食點心</option>
+                <option value="火鍋燒烤">火鍋燒烤</option>
+                <option value="日韓料理">日韓料理</option>
+                <option value="美式義式">美式義式</option>
+                <option value="飲料甜點">飲料甜點</option>
             </select>
         </div>
 
         <div class="filter-item">
-            <label for="timeSelect">距離元智路程</label>
-            <select id="timeSelect">
-                <option value="999">不限距離</option>
-                <option value="5">📍 5 分鐘內</option>
-                <option value="10">📍 10 分鐘內</option>
-                <option value="15">📍 15 分鐘內</option>
+            <label for="ratingSelect">⭐ 最低評價</label>
+            <select id="ratingSelect">
+                <option value="0">不限評價</option>
+                <option value="4.5">4.5 星以上 (超級好評)</option>
+                <option value="4.0">4.0 星以上 (優質推薦)</option>
+                <option value="3.5">3.5 星以上 (普通水準)</option>
             </select>
         </div>
 
-        <button id="spinBtn" onclick="fetchAndSpin()">開始轉盤！</button>
+        <div class="filter-item">
+            <label for="timeSelect">📍 距離路程</label>
+            <select id="timeSelect">
+                <option value="999">不限距離</option>
+                <option value="5">5 分鐘內 (極近校區)</option>
+                <option value="10">10 分鐘內 (中等車程)</option>
+                <option value="15">15 分鐘內 (稍微偏遠)</option>
+            </select>
+        </div>
+
+        <div class="toggle-item">
+            <span class="toggle-label">🛡️ 開啟「終極排雷機制」 (低評絕對禁入)</span>
+            <input type="checkbox" id="antiMineToggle" checked style="width: 18px; height: 18px; cursor: pointer;">
+        </div>
+
+        <button class="btn-spin" id="spinBtn" onclick="fetchAndSpin()">開始旋轉轉盤</button>
     </div>
 
     <div class="wheel-box">
         <div class="pointer"></div>
-        <canvas id="wheelCanvas" width="350" height="350"></canvas>
+        <canvas id="wheelCanvas" width="320" height="320"></canvas>
     </div>
 
     <div id="resultCard" class="result-card">
-        <div class="res-title" id="resName">餐廳名稱</div>
-        <p><strong>菜系：</strong><span id="resType">-</span></p>
-        <p><strong>評價：</strong>⭐ <span id="resRating">-</span></p>
-        <p><strong>距離元智：</strong>📍 <span id="resDist">-</span></p>
-        <p><strong>地址：</strong><a id="resMapLink" href="#" target="_blank" class="map-link"><span id="resAddr">-</span></a></p>
-        <p><strong>營業時間：</strong>⏰ <span id="resTime">-</span></p>
+        <div class="res-header">
+            <div class="res-title" id="resName">餐廳名稱</div>
+            <div class="res-badge" id="resType">菜系</div>
+        </div>
+        <div class="res-info-grid">
+            <div class="res-item"><strong>⭐ 商家評價：</strong><span id="resRating">-</span></div>
+            <div class="res-item"><strong>📍 距離元智：</strong><span id="resDist">-</span></div>
+            <div class="res-item" style="grid-column: span 2;"><strong>⏰ 營業時間：</strong><span id="resTime">-</span></div>
+            <div class="res-item" style="grid-column: span 2; margin-bottom: 4px;"><strong>🏠 餐廳地址：</strong><span id="resAddr">-</span></div>
+            
+            <a id="resMapLink" href="#" target="_blank" class="map-btn">
+                🗺️ 在 Google Maps 中打開導航
+            </a>
+        </div>
     </div>
 </div>
 
@@ -171,20 +310,22 @@ const ctx = canvas.getContext('2d');
 let currentAngle = 0;
 let isSpinning = false;
 let restaurants = [];
+
+// 採用精緻、飽和度舒適的馬卡龍科技漸層配色
 const colors = ["#ff7675", "#74b9ff", "#a29bfe", "#ffeaa7", "#55efc4", "#fab1a0", "#fd79a8", "#00cec9"];
 
 drawDefaultWheel();
 
 function drawDefaultWheel() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = '#dfe6e9';
+    ctx.fillStyle = '#f1f5f9';
     ctx.beginPath();
-    ctx.arc(175, 175, 175, 0, 2 * Math.PI);
+    ctx.arc(160, 160, 160, 0, 2 * Math.PI);
     ctx.fill();
-    ctx.fillStyle = '#636e72';
-    ctx.font = '16px Microsoft JhengHei';
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = 'bold 15px Microsoft JhengHei';
     ctx.textAlign = 'center';
-    ctx.fillText('設定條件並點擊開始', 175, 175);
+    ctx.fillText('設定上方條件後開始抽籤', 160, 160);
 }
 
 function drawWheel(list, angleOffset = 0) {
@@ -196,20 +337,20 @@ function drawWheel(list, angleOffset = 0) {
         const angle = angleOffset + (i * arcSize);
         ctx.fillStyle = colors[i % colors.length];
         ctx.beginPath();
-        ctx.moveTo(175, 175);
-        ctx.arc(175, 175, 175, angle, angle + arcSize);
-        ctx.lineTo(175, 175);
+        ctx.moveTo(160, 160);
+        ctx.arc(160, 160, 160, angle, angle + arcSize);
+        ctx.lineTo(160, 160);
         ctx.fill();
 
         ctx.save();
         let name = list[i]['餐廳名稱'];
         if(name.length > 5) name = name.substring(0, 5) + '...';
-        ctx.fillStyle = '#2d3436';
-        ctx.font = 'bold 11px Microsoft JhengHei';
-        ctx.translate(175, 175);
+        ctx.fillStyle = '#1e293b';
+        ctx.font = 'bold 12px Microsoft JhengHei';
+        ctx.translate(160, 160);
         ctx.rotate(angle + arcSize / 2);
         ctx.textAlign = 'right';
-        ctx.fillText(name, 140, 4);
+        ctx.fillText(name, 130, 4);
         ctx.restore();
     }
 }
@@ -217,8 +358,15 @@ function drawWheel(list, angleOffset = 0) {
 function fetchAndSpin() {
     if (isSpinning) return;
     const budget = document.getElementById('budgetSelect').value;
-    const rating = document.getElementById('ratingSelect').value;
+    let rating = parseFloat(document.getElementById('ratingSelect').value);
     const time = document.getElementById('timeSelect').value;
+    const type = document.getElementById('typeSelect').value;
+    const antiMine = document.getElementById('antiMineToggle').checked;
+
+    // 如果開起終極排雷，最低門檻自動拉高至 3.8 星
+    if (antiMine && rating < 3.8) {
+        rating = 3.8;
+    }
 
     fetch('/get_restaurants', {
         method: 'POST',
@@ -227,13 +375,21 @@ function fetchAndSpin() {
     })
     .then(response => response.json())
     .then(data => {
-        if (data.status === 'empty' || data.restaurants.length === 0) {
-            alert('找不到符合目前篩選條件的餐廳，請放寬標準再試一次！');
+        let list = data.restaurants;
+        
+        // 前端加碼過濾：種類篩選
+        if (type !== 'all') {
+            list = list.filter(r => r['菜系'] && r['菜系'].includes(type));
+        }
+
+        if (data.status === 'empty' || list.length === 0) {
+            alert('找不到符合目前多重篩選條件的餐廳，請放寬標準再試一次！');
             return;
         }
-        restaurants = data.restaurants;
+        
+        restaurants = list;
         while (restaurants.length < 4) {
-            restaurants = restaurants.concat(data.restaurants);
+            restaurants = restaurants.concat(list);
         }
         startSpinAnimation();
     });
@@ -246,7 +402,7 @@ function startSpinAnimation() {
 
     const numSegments = restaurants.length;
     const arcSize = (2 * Math.PI) / numSegments;
-    const spinCircles = 5 + Math.floor(Math.random() * 5);
+    const spinCircles = 6 + Math.floor(Math.random() * 4);
     const targetAngle = currentAngle + (spinCircles * 2 * Math.PI) + (Math.random() * 2 * Math.PI);
     const duration = 4000;
     const startTime = performance.now();
@@ -255,7 +411,7 @@ function startSpinAnimation() {
         const elapsed = currentTime - startTime;
         if (elapsed < duration) {
             const progress = elapsed / duration;
-            const easeOut = 1 - Math.pow(1 - progress, 3);
+            const easeOut = 1 - Math.pow(1 - progress, 4); // 更擬真的緩動老鷹煞車
             const angle = currentAngle + (targetAngle - currentAngle) * easeOut;
             drawWheel(restaurants, angle);
             requestAnimationFrame(animate);
@@ -275,22 +431,20 @@ function startSpinAnimation() {
 
 function showResult(winner) {
     document.getElementById('resName').innerText = winner['餐廳名稱'];
-    document.getElementById('resType').innerText = winner['菜系'] || '未知';
-    document.getElementById('resRating').innerText = winner['評價'] || '無';
+    document.getElementById('resType').innerText = winner['菜系'] || '一般美食';
+    document.getElementById('resRating').innerText = winner['評價'] ? '⭐ ' + winner['評價'] : '暫無評分';
     document.getElementById('resDist').innerText = winner['距離元智大學'] || '未知';
     document.getElementById('resAddr').innerText = winner['地址'] || '未知';
     document.getElementById('resTime').innerText = winner['營業時間'] || '未知';
     
-    // 生成 Google Maps 地圖導航連結
-    const restaurantName = winner['餐廳名稱'];
-    const restaurantAddr = winner['地址'] || '';
-    if (restaurantAddr && restaurantAddr !== '-') {
-        // 利用 encodeURIComponent 自動把中文轉成網址編碼，防止跳轉亂碼
-        document.getElementById('resMapLink').href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(restaurantName + ' ' + restaurantAddr)}`;
-        document.getElementById('resMapLink').style.pointerEvents = 'auto';
+    // 地圖智慧導航按鈕建置
+    const name = winner['餐廳名稱'];
+    const addr = winner['地址'] || '';
+    if (addr && addr !== '-') {
+        document.getElementById('resMapLink').href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name + ' ' + addr)}`;
+        document.getElementById('resMapLink').style.display = 'flex';
     } else {
-        document.getElementById('resMapLink').href = '#';
-        document.getElementById('resMapLink').style.pointerEvents = 'none';
+        document.getElementById('resMapLink').style.display = 'none';
     }
 
     document.getElementById('resultCard').style.display = 'block';
